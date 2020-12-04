@@ -1,20 +1,18 @@
-import f1racingfx.models.F1DomainPath;
-import f1racingfx.models.SeasonYear;
-import f1racingfx.view.ComboBoxDisplays;
+import api.RacingAPI;
+import f1racingfx.view.InitiateApplication;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
-import javafx.scene.control.ComboBox;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.text.Text;
+import javafx.scene.control.Label;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-
 import java.io.IOException;
 
 public class F1RacingFXApp extends Application {
-
-    private ComboBoxDisplays comboBoxes;
+    InitiateApplication IniApp;
+    public Stage errorStage;
+    private Scene sceneError;
+    private VBox errorBox;
 
 
     public static void main(String[] args) {
@@ -22,33 +20,31 @@ public class F1RacingFXApp extends Application {
     }
 
     @Override
-    public void start(Stage primaryStage) throws IOException
-    {
-        comboBoxes = new ComboBoxDisplays();
-        BorderPane pane = new BorderPane();
-        setUpBorderPane(pane);
+    public void start(Stage primaryStage) {
+        try {
+            RacingAPI raceData = new RacingAPI("results/1");
+            raceData.makeConnection();
+            IniApp = new InitiateApplication(primaryStage);
+        } catch (IOException e) {
+            sceneException(primaryStage);
+        }
+    }
+        private void sceneException(Stage stage)
+        {
+            errorStage = stage;
+            setErrorScene();
+            errorStage.setScene(sceneError);
+            errorStage.setTitle("Caught An Exception");
+            errorStage.show();
+        }
 
-        Scene scene = new Scene(pane, 1000, 200);
-        primaryStage.setScene(scene);
-        primaryStage.setTitle("F1 Car Race Data");
-        primaryStage.show();
+        private void setErrorScene()
+        {
+            Label errorMessage = new Label("Data not received from the API");
+            errorBox = new VBox(errorMessage);
+            sceneError = new Scene(errorBox,400,100);
+            errorBox.setPadding(new Insets(30,30,30,30));
+            errorBox.setStyle("-fx-font: 20 georgia;");
+        }
     }
 
-    private  void  setUpBorderPane(BorderPane borderPane)
-    {
-        HBox hBox = new HBox();
-        setUpHBox(hBox);
-        borderPane.setTop(hBox);
-    }
-
-    private void setUpHBox(HBox hBox) {
-        hBox.setSpacing(10);
-        ComboBox<SeasonYear> seasonRange = comboBoxes.getCategories();
-        ComboBox<F1DomainPath> raceData = comboBoxes.getRaceData();
-        Text textBox = comboBoxes.getTextBox();
-        hBox.getChildren().addAll(seasonRange,raceData,textBox);
-        HBox.setMargin(seasonRange, new Insets(20,5,5,10));
-        HBox.setMargin(raceData,new Insets(20,5,5,5));
-        HBox.setMargin(textBox,new Insets(20,5,5,5));
-    }
-}

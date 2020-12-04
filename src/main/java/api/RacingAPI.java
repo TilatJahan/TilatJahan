@@ -1,96 +1,78 @@
 package api;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
 
+import org.json.JSONObject;
 import javax.ws.rs.HttpMethod;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 public class RacingAPI {
     private String urlString = "http://ergast.com/api/f1/";
-
     private HttpURLConnection connection = null;
     private String JsonObj;
 
-    public RacingAPI(String JsonObj) {
-        this.JsonObj = JsonObj;
-    }
+    public RacingAPI(String JsonObj) {this.JsonObj = JsonObj; }
 
     public RacingAPI(HttpURLConnection connection) {
         this.connection = connection;
     }
+        public void makeConnection() throws IOException {
 
-    public void makeConnection()
-    {
-        try
-        {
             URL url = getURL();
             getResponse(url);
 
             final InputStream inputStream = connection.getInputStream();
             final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
-            JSONParser parser = new JSONParser();
-            JSONObject response = (JSONObject) parser.parse(bufferedReader.readLine());
-            System.out.println("Printing Data");
-            JSONObject resp_obj = (JSONObject) response.get("MRData");
-            JSONObject raceData = (JSONObject) resp_obj.get("RaceTable");
-            JSONArray results = (JSONArray) raceData.get("Races");
+            Stream<String> lines = bufferedReader.lines();
+            List<String> races = lines.map(line -> new JSONObject(line).getJSONObject("MRData").getJSONObject("RaceTable")
+                    .getJSONArray("Races"))
+                    .map(jsonArray ->
+                    { List<String> objs = new ArrayList<>();
+                        for (int i = 0; i < jsonArray.length(); i++) {
 
-            String path = WriterAppF1race.setPath();
-            RandomWriterF1race rw = new RandomWriterF1race(path, "Races.txt");
-            resultFile(rw,results);
-        } catch (Exception e)
-        {
-            System.out.println(e.toString());
-        }
-    }
+                            objs.add(jsonArray.getJSONObject(i).get("season").toString() + ","
+                                    + jsonArray.getJSONObject(i).get("raceName") + ","
+                                    + jsonArray.getJSONObject(i).getJSONObject("Circuit").getJSONObject("Location").get("country") + ","
+                                    + jsonArray.getJSONObject(i).getJSONArray("Results").getJSONObject(0).getJSONObject("Driver").get("givenName") +","
+                                    + jsonArray.getJSONObject(i).getJSONArray("Results").getJSONObject(0).getJSONObject("Driver").get("nationality"));
 
-        public static ArrayList<String> subArray(JSONArray results)
-        {
-            ArrayList<String> country =new ArrayList<>();
-            for (JSONObject factObj : (Iterable<JSONObject>) results)
-            {
-                JSONObject circuit = (JSONObject) factObj.get("Circuit");
-                JSONObject location = (JSONObject) circuit.get("Location");
-                String country1 = (String) location.get("country");
-                country.add(country1);
-            }
-            return country;
+                        }
+                        return objs;
+                    })
+
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toList());
+                    writeToFile(races);
+
+
         }
 
+       private void writeToFile( List<String> races) throws IOException
+       {
+           String path = WriterAppF1race.setPath();
+           RandomWriterF1race rw = new RandomWriterF1race(path, "Races.txt");
+           for (String race : races) {
+               rw.WriteData(race);
+               rw.WriteData("\n");
+           }
+       }
 
-        public static void resultFile(RandomWriterF1race rw, JSONArray results) throws IOException
-        {
-            int i=0;
-            ArrayList<String> countryList;
-            countryList = subArray(results);
-            for (Object r : results) {
-                JSONObject result = (JSONObject) r;
-                String toFile = result.get("season") + "," + result.get("raceName") + "," + countryList.get(i) + "\n";
-                System.out.println(toFile);
-                i=i+1;
-                rw.WriteData(toFile);
-            }
-
-        }
 
     private URL getURL() throws MalformedURLException
     {
         this.urlString += this.JsonObj + ".json";
-        urlString += "?&limit=1000";
+        urlString += "?&limit=9000";
         System.out.println(urlString);
-        return new URL(urlString + "/Races/");
-
+        return new URL(urlString);
     }
 
     private void getResponse(URL url) throws IOException

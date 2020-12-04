@@ -31,7 +31,7 @@ public class RandomWriterF1race{
 
     }
 
-    public void WriteData(String fetched) throws IOException {
+    public void WriteData(String fetched)  {
 
         try {
 

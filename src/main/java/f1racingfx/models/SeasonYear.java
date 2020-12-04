@@ -9,7 +9,7 @@ public enum SeasonYear {
     private final int min;
     private  final int max;
 
-    SeasonYear(int min, int max) {
+    SeasonYear(int min, int max){
         this.min = min;
         this.max = max;
     }
@@ -21,6 +21,7 @@ public enum SeasonYear {
     public int getMax() {
         return max;
     }
+
 }
 
 

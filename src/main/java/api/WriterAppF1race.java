@@ -21,7 +21,6 @@ public class WriterAppF1race {
 
        path = path.substring(0, path.indexOf("classes"));
        path += "resources" + File.separator + "main"+ File.separator;
-        System.out.println(path);
        return path;
     }
 }
