@@ -31,7 +31,7 @@ public class RacingAPI {
 
             final InputStream inputStream = connection.getInputStream();
             final BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-
+//Fetch data from the json
             Stream<String> lines = bufferedReader.lines();
             List<String> races = lines.map(line -> new JSONObject(line).getJSONObject("MRData").getJSONObject("RaceTable")
                     .getJSONArray("Races"))
@@ -70,7 +70,7 @@ public class RacingAPI {
     private URL getURL() throws MalformedURLException
     {
         this.urlString += this.JsonObj + ".json";
-        urlString += "?&limit=9000";
+        urlString += "?&limit=8000";
         System.out.println(urlString);
         return new URL(urlString);
     }
